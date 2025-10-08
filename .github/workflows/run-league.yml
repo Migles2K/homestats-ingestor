@@ -4,29 +4,13 @@ on:
   workflow_dispatch:
     inputs:
       league:
-        description: Nome da liga (aba do Sheets)
+        description: Nome da liga (igual à aba do Sheets)
         required: true
-        type: choice
-        options:
-          - La Liga
-          - Premier League
-          - Bundesliga
-          - Champions League
-          - Serie A
-          - Brasileirão
-          - Ligue 1
-          - Eredivisie
-          - Liga Portugal
-          - Liga Profesional
-          - Süper Lig
-          - MLS
-          - Europa League
-          - Sul-Americana
+        default: "Ligue 1"
       from_scratch:
-        description: Resetar a aba antes de preencher
+        description: Resetar a aba antes de preencher (true/false)
         required: true
-        type: boolean
-        default: true
+        default: "true"
 
 jobs:
   run:
