@@ -1,13 +1,12 @@
-# .github/workflows/run-league.yml
-name: Run league
+name: run-league
 
 on:
   workflow_dispatch:
     inputs:
       league:
-        description: Nome canônico da liga (ex.: La Liga, Premier League, Brasileirão)
-        type: choice
+        description: Nome da liga (aba do Sheets)
         required: true
+        type: choice
         options:
           - La Liga
           - Premier League
@@ -23,32 +22,17 @@ on:
           - MLS
           - Europa League
           - Sul-Americana
+      from_scratch:
+        description: Resetar a aba antes de preencher
+        required: true
+        type: boolean
+        default: true
 
 jobs:
   run:
     runs-on: ubuntu-latest
-
-    env:
-      SPREADSHEET_ID: ${{ secrets.SPREADSHEET_ID }}
-      GOOGLE_SERVICE_ACCOUNT_JSON: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_JSON }}
-      LEAGUES_JSON: |
-        {
-          "La Liga": {"tid": 8, "sid": 77559},
-          "Premier League": {"tid": 17, "sid": 76986},
-          "Bundesliga": {"tid": 35, "sid": 77333},
-          "Champions League": {"tid": 7, "sid": 76953},
-          "Serie A": {"tid": 23, "sid": 76457},
-          "Brasileirão": {"tid": 325, "sid": 72034},
-          "Ligue 1": {"tid": 34, "sid": 77356},
-          "Eredivisie": {"tid": 37, "sid": 77012},
-          "Liga Portugal": {"tid": 238, "sid": 77806},
-          "Liga Profesional": {"tid": 18817, "sid": 71738},
-          "Süper Lig": {"tid": 52, "sid": 77805},
-          "MLS": {"tid": 242, "sid": 70158},
-          "Europa League": {"tid": 679, "sid": 76984},
-          "Sul-Americana": {"tid": 480, "sid": 70070}
-        }
-
+    permissions:
+      contents: read
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -63,16 +47,16 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Create service account key file
+      - name: Write service-account key
+        env:
+          GOOGLE_SERVICE_ACCOUNT_JSON: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_JSON }}
         run: |
           echo "$GOOGLE_SERVICE_ACCOUNT_JSON" > sa.json
 
       - name: Run ingestor
         env:
-          LEAGUE_NAME: ${{ inputs.league }}
-          GOOGLE_APPLICATION_CREDENTIALS: ${{ github.workspace }}/sa.json
+          SPREADSHEET_ID: ${{ secrets.SPREADSHEET_ID }}
+          LEAGUE: ${{ github.event.inputs.league }}
+          FROM_SCRATCH: ${{ github.event.inputs.from_scratch }}
         run: |
-          python -m src.ingestor \
-            --spreadsheet-id "$SPREADSHEET_ID" \
-            --league "$LEAGUE_NAME" \
-            --leagues-json "$LEAGUES_JSON"
+          python src/ingestor.py
