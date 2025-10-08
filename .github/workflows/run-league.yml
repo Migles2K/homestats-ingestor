@@ -1,18 +1,22 @@
-name: run-ligue1
+name: run-league
 
 on:
-  workflow_dispatch: {}
+  workflow_dispatch:
+    inputs:
+      league:
+        description: Nome da liga (igual à aba do Sheets)
+        required: true
+        default: "Ligue 1"
+      from_scratch:
+        description: Resetar a aba antes de preencher (true/false)
+        required: true
+        default: "true"
 
 jobs:
   run:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-    env:
-      # <<< FIXOS, COMO VOCÊ PEDIU >>>
-      LEAGUE: "Ligue 1"
-      FROM_SCRATCH: "true"
-      SPREADSHEET_ID: ${{ secrets.SPREADSHEET_ID }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -33,6 +37,10 @@ jobs:
         run: |
           echo "$GOOGLE_SERVICE_ACCOUNT_JSON" > sa.json
 
-      - name: Run ingestor (Ligue 1, from scratch = true)
+      - name: Run ingestor
+        env:
+          SPREADSHEET_ID: ${{ secrets.SPREADSHEET_ID }}
+          LEAGUE: ${{ github.event.inputs.league }}
+          FROM_SCRATCH: ${{ github.event.inputs.from_scratch }}
         run: |
           python src/ingestor.py
