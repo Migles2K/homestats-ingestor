@@ -8,11 +8,12 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
+
     env:
-      # <<< FIXOS, COMO VOCÊ PEDIU >>>
       LEAGUE: "Ligue 1"
       FROM_SCRATCH: "true"
       SPREADSHEET_ID: ${{ secrets.SPREADSHEET_ID }}
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -31,8 +32,15 @@ jobs:
         env:
           GOOGLE_SERVICE_ACCOUNT_JSON: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_JSON }}
         run: |
-          echo "$GOOGLE_SERVICE_ACCOUNT_JSON" > sa.json
+          echo "$GOOGLE_SERVICE_ACCOUNT_JSON" > service_account.json
 
       - name: Run ingestor (Ligue 1, from scratch = true)
+        env:
+          SPREADSHEET_ID: ${{ env.SPREADSHEET_ID }}
         run: |
-          python src/ingestor.py
+          MODE=$([ "${FROM_SCRATCH}" = "true" ] && echo "from-scratch" || echo "update")
+          python src/ingestor.py --league "${LEAGUE}" --mode "${MODE}"
+
+      - name: Cleanup key
+        if: always()
+        run: rm -f service_account.json
